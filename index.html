@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tá Marcado</title>
+    <link rel="apple-touch-icon" href="icone.png">
+    <link rel="shortcut icon" href="icone.png">
+    
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f0f2f5; padding: 20px; }
+        .card { background-color: #ffffff; padding: 20px; border-radius: 15px; max-width: 400px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #003366; }
+        input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .botoes { display: flex; gap: 10px; margin-top: 15px; }
+        button { flex: 1; padding: 10px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; }
+        button:nth-child(1) { background-color: #003366; }
+        button:nth-child(2) { background-color: #28a745; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 14px; }
+        th { background-color: #003366; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h1>TÁ MARCADO</h1>
+    <input type="text" id="nome" placeholder="NOME">
+    <input type="date" id="data">
+    <input type="time" id="hora">
+    <input type="text" id="profissional" placeholder="PROFISSIONAL">
+    <input type="text" id="local" placeholder="LOCAL">
+    <div class="botoes">
+        <button onclick="salvar()">SALVAR</button>
+        <button onclick="enviar()">ENVIAR</button>
+    </div>
+</div>
+
+<table id="tabela">
+    <thead><tr><th>DATA</th><th>HORA</th><th>PROFISSIONAL</th><th>LOCAL</th></tr></thead>
+    <tbody id="corpoTabela"></tbody>
+</table>
+
+<script>
+    let marcacoes = JSON.parse(localStorage.getItem('marcacoes')) || [];
+    
+    function salvar() {
+        const m = {
+            data: document.getElementById('data').value,
+            hora: document.getElementById('hora').value,
+            profissional: document.getElementById('profissional').value,
+            local: document.getElementById('local').value
+        };
+        if(!m.data || !m.profissional) return alert("Preencha Data e Profissional!");
+        marcacoes.push(m);
+        marcacoes.sort((a,b) => new Date(a.data + 'T' + a.hora) - new Date(b.data + 'T' + b.hora));
+        localStorage.setItem('marcacoes', JSON.stringify(marcacoes));
+        atualizarTabela();
+    }
+
+    function atualizarTabela() {
+        const corpo = document.getElementById('corpoTabela');
+        corpo.innerHTML = marcacoes.map(i => `<tr><td>${i.data}</td><td>${i.hora}</td><td>${i.profissional}</td><td>${i.local}</td></tr>`).join('');
+    }
+    
+    atualizarTabela();
+</script>
+</body>
+</html>
