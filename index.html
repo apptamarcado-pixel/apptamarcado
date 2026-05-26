@@ -4,66 +4,104 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tá Marcado</title>
-    <link rel="apple-touch-icon" href="icone.png">
-    <link rel="shortcut icon" href="icone.png">
-    
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f0f2f5; padding: 20px; }
-        .card { background-color: #ffffff; padding: 20px; border-radius: 15px; max-width: 400px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        body { font-family: sans-serif; background-color: #f0f2f5; padding: 20px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 400px; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         h1 { text-align: center; color: #003366; }
-        input { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
-        .botoes { display: flex; gap: 10px; margin-top: 15px; }
-        button { flex: 1; padding: 10px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; }
-        button:nth-child(1) { background-color: #003366; }
-        button:nth-child(2) { background-color: #28a745; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 14px; }
-        th { background-color: #003366; color: white; }
+        
+        .foto-box { width: 100px; height: 100px; border: 2px dashed #003366; margin: 10px auto; display: flex; align-items: center; justify-content: center; border-radius: 10px; cursor: pointer; overflow: hidden; }
+        .foto-box img { width: 100%; height: 100%; object-fit: cover; }
+        
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ccc; border-radius: 10px; box-sizing: border-box; }
+        
+        .btn-acao { width: 100%; padding: 12px; border: none; border-radius: 10px; color: white; font-weight: bold; margin: 5px 0; cursor: pointer; }
+        .btn-salvar { background-color: #003366; }
+        .btn-enviar { background-color: #28a745; }
+        .btn-tabela { background-color: #6c757d; }
+        
+        .links-portal { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-link { flex: 1; padding: 10px; text-align: center; background: #e9ecef; text-decoration: none; color: #333; border-radius: 8px; font-weight: bold; font-size: 14px; }
+        
+        #tabela-container { display: none; margin-top: 20px; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th { background: #003366; color: white; padding: 10px; }
+        td { border-bottom: 1px solid #ddd; padding: 10px; text-align: center; }
     </style>
 </head>
 <body>
 
-<div class="card">
+<div class="container">
     <h1>TÁ MARCADO</h1>
-    <input type="text" id="nome" placeholder="NOME">
+    
+    <div class="foto-box" onclick="document.getElementById('inputFoto').click()">
+        <span id="txt-foto">+ Foto</span>
+        <input type="file" id="inputFoto" style="display:none" accept="image/*" onchange="carregarFoto(event)">
+    </div>
+
+    <input type="text" id="nome" placeholder="NOME DO CLIENTE">
     <input type="date" id="data">
     <input type="time" id="hora">
-    <input type="text" id="profissional" placeholder="PROFISSIONAL">
+    <input type="text" id="prof" placeholder="PROFISSIONAL">
     <input type="text" id="local" placeholder="LOCAL">
-    <div class="botoes">
-        <button onclick="salvar()">SALVAR</button>
-        <button onclick="enviar()">ENVIAR</button>
+
+    <button class="btn-acao btn-salvar" onclick="salvar()">SALVAR</button>
+    <button class="btn-acao btn-enviar" onclick="enviarWhatsApp()">ENVIAR (WHATSAPP)</button>
+    <button class="btn-acao btn-tabela" onclick="toggleTabela()">VER MARCADOS</button>
+
+    <div class="links-portal">
+        <a href="https://painel.saude.rj.gov.br/RelatorioSER/ListaEsperaAmbulatorial.html" class="btn-link" target="_blank">SER</a>
+        <a href="https://web2.smsrio.org/portalPaciente/login/#/" class="btn-link" target="_blank">SISREG</a>
+    </div>
+
+    <div id="tabela-container">
+        <table>
+            <thead><tr><th>DATA</th><th>HORA</th><th>PROF.</th><th>LOCAL</th></tr></thead>
+            <tbody id="corpo-tabela"></tbody>
+        </table>
     </div>
 </div>
 
-<table id="tabela">
-    <thead><tr><th>DATA</th><th>HORA</th><th>PROFISSIONAL</th><th>LOCAL</th></tr></thead>
-    <tbody id="corpoTabela"></tbody>
-</table>
-
 <script>
-    let marcacoes = JSON.parse(localStorage.getItem('marcacoes')) || [];
-    
+    function carregarFoto(event) {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.querySelector('.foto-box').innerHTML = `<img src="${e.target.result}">`;
+        }
+        reader.readAsDataURL(file);
+    }
+
     function salvar() {
-        const m = {
-            data: document.getElementById('data').value,
+        let lista = JSON.parse(localStorage.getItem('marcacoes')) || [];
+        let nova = {
+            data: document.getElementById('data').value.split('-').reverse().join('/'),
             hora: document.getElementById('hora').value,
-            profissional: document.getElementById('profissional').value,
+            prof: document.getElementById('prof').value,
             local: document.getElementById('local').value
         };
-        if(!m.data || !m.profissional) return alert("Preencha Data e Profissional!");
-        marcacoes.push(m);
-        marcacoes.sort((a,b) => new Date(a.data + 'T' + a.hora) - new Date(b.data + 'T' + b.hora));
-        localStorage.setItem('marcacoes', JSON.stringify(marcacoes));
-        atualizarTabela();
+        lista.push(nova);
+        localStorage.setItem('marcacoes', JSON.stringify(lista));
+        alert("Salvo com sucesso!");
+        renderizar();
     }
 
-    function atualizarTabela() {
-        const corpo = document.getElementById('corpoTabela');
-        corpo.innerHTML = marcacoes.map(i => `<tr><td>${i.data}</td><td>${i.hora}</td><td>${i.profissional}</td><td>${i.local}</td></tr>`).join('');
+    function renderizar() {
+        let lista = JSON.parse(localStorage.getItem('marcacoes')) || [];
+        document.getElementById('corpo-tabela').innerHTML = lista.map(i => 
+            `<tr><td>${i.data}</td><td>${i.hora}</td><td>${i.prof}</td><td>${i.local}</td></tr>`
+        ).join('');
     }
-    
-    atualizarTabela();
+
+    function toggleTabela() {
+        let div = document.getElementById('tabela-container');
+        div.style.display = div.style.display === 'block' ? 'none' : 'block';
+        renderizar();
+    }
+
+    function enviarWhatsApp() {
+        let msg = `Nova Marcação:%0A- Profissional: ${document.getElementById('prof').value}%0A- Local: ${document.getElementById('local').value}%0A- Data/Hora: ${document.getElementById('data').value} às ${document.getElementById('hora').value}`;
+        window.open(`https://wa.me/?text=${msg}`, '_blank');
+    }
 </script>
 </body>
 </html>
